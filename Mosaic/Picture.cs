@@ -29,11 +29,10 @@ namespace Mosaic
             this.pic_size = size * size_cell;
         }
 
-        public void loading(Image img1)
+        public Image loading(Image img1)
         {
             this.img = img1;
-            int i = indent_w();
-            img = framing(img, new Rectangle(indent_w(), 0, size_img(), size_img()));
+            return img = framing(img, new Rectangle(indent_w(), 0, size_img(), size_img()));
         }
 
         private int indent_w()
@@ -42,6 +41,7 @@ namespace Mosaic
             else if (((img.Size.Height / img.Size.Width) > 0.7) && ((img.Size.Height / img.Size.Width) < 1.3)) return img.Size.Width / 6;
             else return img.Size.Width / 4;
         }
+
         private int size_img()
         {
             int width = img.Size.Width;

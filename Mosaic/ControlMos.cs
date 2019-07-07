@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,14 +14,14 @@ namespace Mosaic
     {
         LogicMos game; Picture pic;
         int size;
-        public PictureBox[] pic_box;
-        int count_img = 0, a = 0;
-        public static Image[] big_img;
-        int num, size_cell;
+        public PictureBox[] pic_box; // Массив кусочков мозайки
+        int count_img = 0, a = 0; // Для перелистывания добавленных изоражений
+        public static Image[] big_img; // Кадрированные добавленные изоражений для FormHelp
+        int num, size_cell; //num - номер кусочка мозайки 
         public Point loc=new Point();
         static Random rand = new Random();
-        public TableLayoutPanel table;
-        public PointF[,] cell_origin;
+        public TableLayoutPanel table; //Таблица для размещения кусочков мозайки
+        public PointF cell_origin;
 
         public ControlMos(int size)
         {
@@ -33,14 +34,19 @@ namespace Mosaic
             pic = new Picture(size, size_cell);
             start_pic();
             game.start();
-            generatoinPicBox();
+            GeneratoinPicBox();
         }
 
         public void start_game()
         {
             game.start();
-            deletePicBox();
-            generatoinPicBox();
+            int j1 = rand.Next(0, size), j2 = rand.Next(0, size);
+            for (int i = 0; i < size * size; ++i)
+            {
+                pic_box[i].Location = new Point(game.x[j1], game.y[j2]);
+                j1 = rand.Next(0, size);
+                j2 = rand.Next(0, size);
+            }
         }
 
         private void generatoinTable()
@@ -49,23 +55,21 @@ namespace Mosaic
             table.Size = new Size(500, 500);
             table.ColumnCount = size;
             table.Name = "table";
-            table.Location = new Point(150, 0);
+            table.Location = new Point(0, 24);
             table.RowCount = size;
             table.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
             table.BackColor = Color.White;
 
-            int width = 100 / table.ColumnCount;
-            int height = 100 / table.RowCount;
+            int width = Convert.ToInt16(Math.Round(100f / table.ColumnCount));
+            int height = Convert.ToInt16(Math.Round(100f / table.RowCount));
 
             for (int col = 0; col < table.ColumnCount; col++)
             {
-                // добавляем колонку
-                table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));
-
+                
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));// добавляем колонку
                 for (int row = 0; row < table.RowCount; row++)
                 {
-                    // добавляем строку
-                    if (col == 0)
+                    if (col == 0)// добавляем строку
                     {
                         table.RowStyles.Add(new RowStyle(SizeType.Percent, height));
                     }
@@ -73,15 +77,15 @@ namespace Mosaic
             }
         }
 
+        //Загружет начальное изображение из ресурсов
         public Image start_pic()
         {
             big_img = new Image[size];
-            big_img[0] = (Image)Properties.Resources._1;
-            pic.loading(big_img[0]);
+            big_img[0] = pic.loading(Properties.Resources._1);
             return big_img[0];
         } 
 
-        public void generatoinPicBox()
+        public void GeneratoinPicBox()
         {
             pic_box = new PictureBox[size*size];
             int a = 0, j1=0, j2=0;
@@ -92,9 +96,9 @@ namespace Mosaic
                     pic_box[i].Location = new Point(game.x[j1], game.y[j2]);
                     pic_box[i].Tag = a;
                     pic_box[i].Name = "pic_box" + a;
-                    pic_box[i].MouseMove += picBoxMouseMove;
-                    pic_box[i].MouseDown += picBoxMouseDown;
-                    pic_box[i].MouseUp += picBoxMouseUp;
+                    pic_box[i].MouseMove += PicBoxMouseMove;
+                    pic_box[i].MouseDown += PicBoxMouseDown;
+                    pic_box[i].MouseUp += PicBoxMouseUp;
                     pic_box[i].Image = pic.img1.Images[(count_img * size * size) + i];
                     pic_box[i].Visible = true;
                     a++;
@@ -106,31 +110,35 @@ namespace Mosaic
         private bool _moving;
         private Point _startLocation;
 
-        private void picBoxMouseUp(object sender, MouseEventArgs e)
+        private void PicBoxMouseUp(object sender, MouseEventArgs e)
         {
-            if (check()==true)
+            if (Check() == true)
             {
                 ((PictureBox)sender).Location = new Point(loc.X, loc.Y);
                 ((PictureBox)sender).Enabled = false;
+                if (game.check())
+                {
+                    MessageBox.Show("Вы победили!");
+                }
             }
             _moving = false;
         }
 
-        private bool check()
+        private bool Check()
         {
             int xt, yt;
-            absolute_to_table(loc, out xt, out yt);
+            Absolute_to_table(loc, out xt, out yt);
             int position_true = num;
             int position_real = game.coordinates_to_position(xt, yt);
             if (position_true == position_real&&xt!=-1&&yt!=-1)
             {
-                loc = new Point((int)cell_origin[xt, yt].X, (int)cell_origin[xt, yt].Y);
+                loc = new Point((int)cell_origin.X, (int)cell_origin.Y);
                 return true;
             }
             else return false;
         }
 
-        private void picBoxMouseMove(object sender, MouseEventArgs e)
+        private void PicBoxMouseMove(object sender, MouseEventArgs e)
         {
             if (_moving)
             {
@@ -139,41 +147,36 @@ namespace Mosaic
             }
         }
 
-        private void picBoxMouseDown(object sender, MouseEventArgs e)
+        private void PicBoxMouseDown(object sender, MouseEventArgs e)
         {
             _moving = true;
             _startLocation = e.Location;
             num = Convert.ToInt16(((PictureBox)sender).Tag);
         }
 
-        private void absolute_to_table(PointF coord, out int xt, out int yt)
+        //Переводит абсолютные координаты в табличные
+        private void Absolute_to_table(PointF coord, out int xt, out int yt) 
         {
-            FormMosaic form = new FormMosaic();
-            float widthForm = form.Width, heightForm = form.Height;
-            float width_table = table.Width, height_table = table.Height;
             float a = 100f / table.ColumnCount, b = 100f / table.RowCount;
             float width_cell = table.Width * a / 100, height_cell = table.Height * b / 100;
-            PointF table_origin = new PointF((widthForm - width_table) / 2, 0);
-            cell_origin = new PointF[size, size];
             xt = -1; yt = -1;
             int i = 0, j = 0;
-            while (i < size && j < size)
+            while (i < size && j < size) 
             {
-                if (!((coord.X > table_origin.X + i * width_cell) &&
-                    (coord.X < table_origin.X + (i + 1) * width_cell))) i++;
-                else if (!((coord.Y > table_origin.Y + j * height_cell) &&
-                        (coord.Y < table_origin.Y + (j + 1) * height_cell))) j++;
+                if (!((coord.X > table.Location.X + i * width_cell) &&
+                    (coord.X < table.Location.X + (i + 1) * width_cell))) i++;
+                else if (!((coord.Y > table.Location.Y + j * height_cell) &&
+                        (coord.Y < table.Location.Y + (j + 1) * height_cell))) j++;
                 else {
-                    cell_origin[i, j] = new PointF(table_origin.X+i * width_cell, table_origin.Y+j * height_cell); //3-margin
+                    cell_origin = new PointF(table.Location.X+i * width_cell, table.Location.Y+j * height_cell); //3-margin
                     xt = i;
                     yt = j;
                     break;
                 }
             }
-            
         }
 
-        public void deletePicBox()
+        public void DeletePicBox()
         {
             for (int i = 0; i < size*size; i++)
             {
@@ -182,7 +185,7 @@ namespace Mosaic
             table.Dispose();
         }
 
-        public bool Add_pictire()
+        public bool Add_picture()
         {
             OpenFileDialog openImage = new OpenFileDialog();
             openImage.Filter = "Imege Files(*.JPG;*.PNG)|*.JPG;*.PNG|All files(*.*)|*.*";
@@ -196,7 +199,7 @@ namespace Mosaic
                     big_img[count_img] = pic.img;
                     a++;
                     //start_game();
-                    //refresh();
+                    Refresh();
                     //c = count_img;
                     return true;
                 }
@@ -218,7 +221,7 @@ namespace Mosaic
             else
             {
                 count_img--;
-                //refresh();
+                Refresh();
                 return true;
             }
         }
@@ -232,9 +235,79 @@ namespace Mosaic
             else
             {
                 count_img++;
-                //refresh();
+                Refresh();
                 return true;
             }
+        }
+
+        private void Refresh()
+        {
+            for (int i = 0; i < size * size; ++i)
+            {
+                pic_box[i].Image = null;
+                pic_box[i].Image = pic.img1.Images[(count_img * size * size) + i];
+            }
+        }
+
+        //Возвращает изображение для FormHelp
+        public Image Help()
+        {
+            return big_img[count_img];
+        }
+
+        public void Save()
+        {
+            using (StreamWriter str = new StreamWriter(@"E:\isd\Games\SaveGame.txt"))
+            {
+                str.WriteLine(size);
+                for (int i = 0; i < size * size; i++)
+                {
+                    int x = pic_box[i].Location.X;
+                    str.WriteLine(x);
+                    int y = pic_box[i].Location.Y;
+                    str.WriteLine(y);
+                }
+                str.Close();
+            }
+        }
+
+        public void loadSavedGame()
+        {
+            var fi = new FileInfo(@"E:\isd\Games\SaveGame.txt");
+            if (fi.Length == 0)
+            {
+                MessageBox.Show("Нет сохранненой игры.");
+            }
+            else
+            {
+                using (StreamReader str = new StreamReader(@"E:\isd\Games\SaveGame.txt", System.Text.Encoding.Default))
+                {
+                    int[] X = new int[size*size];
+                    int[] Y = new int[size*size];
+                    string line;
+                    line = str.ReadLine();
+                    for (int i = 0; i < size*size; i++)
+                    {
+                        line = str.ReadLine();
+                        X[i] = Convert.ToInt32(line);
+                        line = str.ReadLine();
+                        Y[i] = Convert.ToInt32(line);
+                        pic_box[i].Location = new Point(X[i], Y[i]);
+                    }
+                    //rewrite_m();
+                    //refresh();
+                }
+            }
+        }
+
+        public int loadsize()
+        {
+            int s;
+            using (StreamReader str = new StreamReader(@"E:\isd\Games\SaveGame.txt", System.Text.Encoding.Default))
+            {
+                s = Convert.ToInt32(str.ReadLine());
+            }
+            return s;
         }
     }
 }

@@ -9,9 +9,10 @@ namespace Mosaic
     class LogicMos
     {
         int size;
+        int count = 0;//кол-во picturebox занявшие свои позции
         public int[] x, y;
         static Random rand = new Random();
-        static int size_pic_box=65, size_form=500;
+        static int size_table=500, width_form = 1000, height_form = 565, size_pic_box = 100; //size_pic_box - условное значение
 
 
         public LogicMos(int size)
@@ -27,8 +28,8 @@ namespace Mosaic
         {
             for (int i = 0; i < size; i++)
             {
-                x[i] = rand.Next(0, size_form - size_pic_box);
-                y[i] = rand.Next(0, size_form - size_pic_box);
+                x[i] = rand.Next(size_table, width_form - size_pic_box);
+                y[i] = rand.Next(24, height_form - size_pic_box);
             }
         }
 
@@ -39,6 +40,16 @@ namespace Mosaic
             if (y < 0) y = 0;
             if (y > size - 1) y = size - 1;
             return y * size + x;
+        }
+
+        public bool check()
+        {
+            if (count < size * size-1)
+            {
+                count++;
+                return false;
+            }
+            else return true;
         }
     }
 }

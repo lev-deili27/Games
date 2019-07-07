@@ -20,83 +20,51 @@ namespace Mosaic
             InitializeComponent();
             con = new ControlMos(size);
             generatoinPicBox(size);
-            //pictureBox1.Size = new Size(size * 65, size * 65);
-            //pictureBox1.Image = con.start_pic();
         }
         
         private void generatoinPicBox(int size)
         {
-            con.generatoinPicBox();
+            con.GeneratoinPicBox();
             for (int i = 0; i < size*size; i++)
             {
                 Controls.Add(con.pic_box[i]);
             }
             Controls.Add(con.table);
         }
-
-        private bool _moving;
-        private Point _startLocation;
-
-        private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
-        {
-            _moving = false;
-        }
-
-        private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (_moving)
-            {
-                pictureBox1.Left += e.Location.X - _startLocation.X;
-                pictureBox1.Top += e.Location.Y - _startLocation.Y;
-            }
-        }
-
-        private void pictureBox1_MouseDown_1(object sender, MouseEventArgs e)
-        {
-            _moving = true;
-            _startLocation = e.Location;
-        }
-
+        
         private void level1_Click(object sender, EventArgs e)
         {
             int size = 6;
-            con.deletePicBox();
+            con.DeletePicBox();
             con = new ControlMos(size);
             generatoinPicBox(size);
-            //pictureBox1.Size = new Size(size * 65, size * 65);
-            //pictureBox1.Image = con.start_pic();
         }
 
         private void level2_Click(object sender, EventArgs e)
         {
             int size = 10;
-            con.deletePicBox();
+            con.DeletePicBox();
             con = new ControlMos(size);
             generatoinPicBox(size);
-            //pictureBox1.Size = new Size(size * 65, size * 65);
-            //pictureBox1.Image = con.start_pic();
         }
 
         private void level3_Click(object sender, EventArgs e)
         {
             int size = 16;
-            con.deletePicBox();
+            con.DeletePicBox();
             con = new ControlMos(size);
             generatoinPicBox(size);
-            //pictureBox1.Size = new Size(size * 65, size * 65);
-            //pictureBox1.Image = con.start_pic();
         }
 
         private void menu_Click(object sender, EventArgs e)
         {
             con.start_game();
-        }
+        } //start - Кнопка начать заново
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            if (con.Add_pictire() == true)
+            if (con.Add_picture() == true)
             {
-               // pictureBox1.Image = Control.big_img[Control.c];
                 buttonRight.Enabled = true;
                 buttonLeft.Enabled = true;
             }
@@ -106,13 +74,11 @@ namespace Mosaic
         {
             if(con.Left_Click() == false)
             {
-               // pictureBox1.Image = Control.big_img[Control.c];
                 buttonLeft.Enabled = false;
             }
             else
             {
                 buttonRight.Enabled = true;
-                //pictureBox1.Image = Control.big_img[Control.c];
             }
         }
 
@@ -125,8 +91,27 @@ namespace Mosaic
             else
             {
                 buttonLeft.Enabled = true;
-               // pictureBox1.Image = Control.big_img[Control.c];
             }
+        }
+
+        private void buttonHelp_Click(object sender, EventArgs e)
+        {
+            FormHelp newForm = new FormHelp(con.Help());
+            newForm.Show();
+        }
+
+        private void savegame_Click(object sender, EventArgs e)
+        {
+            con.Save();
+        }
+
+        private void loadSavedGame_Click(object sender, EventArgs e)
+        {
+            int size = con.loadsize();
+            con.DeletePicBox();
+            con = new ControlMos(size);
+            generatoinPicBox(size);
+            con.loadSavedGame();
         }
     }
 }
